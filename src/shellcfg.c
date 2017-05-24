@@ -43,6 +43,7 @@ char *completion_buffer[SHELL_MAX_COMPLETIONS];
  * Shell commands
  */
 void testCommand(BaseSequentialStream *chp, int argc, char *argv[]);
+void test2Command(BaseSequentialStream *chp, int argc, char *argv[]);
 void i2cCommand(BaseSequentialStream *chp, int argc, char *argv[]);
 void capTestCommand(BaseSequentialStream *chp, int argc, char *argv[]);
 void capWCommand(BaseSequentialStream *chp, int argc, char *argv[]);
@@ -59,6 +60,7 @@ void spmiCommand(BaseSequentialStream *chp, int argc, char *argv[]);
 
 static const ShellCommand commands[] = {
   {"test", testCommand},
+  {"test2", test2Command},
   {"i2c", i2cCommand},
   {"captest", capTestCommand},
   {"c", capWCommand},

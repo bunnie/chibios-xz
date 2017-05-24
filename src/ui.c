@@ -14,6 +14,8 @@ unsigned int time_map[TIME_STATES] = {2, 5, 10, 30, 3600}; // time options, in s
 virtual_timer_t ui_vt;
 event_source_t ui_timer_event;
 
+virtual_timer_t seconds_vt;
+
 ui_monitor  uimon;
 ui_config   uicfg;
 ui_battery  uibat;
@@ -33,6 +35,8 @@ static uint8_t state2_line = 1;
 #define GRAPH_HEIGHT 14
 #define LEGEND_WIDTH 32
 #define GRAPH_WIDTH 96
+
+void buzzer(int state);
 
 static int log_has_event(uint16_t *events, unsigned int search_window_ms) {
   int i;
@@ -189,7 +193,7 @@ void uiHandler(eventid_t id) {
     default:
       chsnprintf(substr, sizeof(substr), "????");
     }
-    chsnprintf(str, sizeof(str), "%s for %ds", substr, ST2MS(chVTTimeElapsedSinceX( uimon.state_entry_time )) / 1000 );
+    chsnprintf(str, sizeof(str), "%s for %ds", substr, uimon.state_elapsed_time );
     gdispFillStringBox(0, cur_line, width, fontlinespace, str, font, Black, White, justifyCenter);
     cur_line += fontlinespace;
 
@@ -264,7 +268,7 @@ void uiHandler(eventid_t id) {
     default:
       chsnprintf(substr, sizeof(substr), "????");
     }
-    chsnprintf(str, sizeof(str), "%s for %ds", substr, ST2MS(chVTTimeElapsedSinceX( uimon.state_entry_time )) / 1000 );
+    chsnprintf(str, sizeof(str), "%s for %ds", substr, uimon.state_elapsed_time );
     gdispFillStringBox(0, cur_line, width, fontlinespace, str, font, Black, White, justifyCenter);
     cur_line += fontlinespace;
     
@@ -372,7 +376,7 @@ void uiHandler(eventid_t id) {
     }
 
     chsnprintf(str, sizeof(str), " %4dmV %s  %5ds %3d%%", uibat.batt_mv, substr,
-	       ST2MS(chVTTimeElapsedSinceX( uimon.state_entry_time )) / 1000, uibat.batt_soc / 10 );
+	       uimon.state_elapsed_time, uibat.batt_soc / 10 );
     gdispDrawStringBox(0, 0, width, fontheight,
 		       str, font_small, White, justifyLeft);
     cur_line += fontheight;
@@ -487,7 +491,7 @@ void uiHandler(eventid_t id) {
 	buzzer(1);
       }
     }
-    uimon.state_entry_time = chVTGetSystemTime();
+    uimon.state_elapsed_time = 0;
   }
   if( uimon.status == UI_LIVE_DEBOUNCE ) {
     if( dark == 0 )
@@ -495,7 +499,7 @@ void uiHandler(eventid_t id) {
     else {
       if( ST2MS(chVTTimeElapsedSinceX( uimon.state_debounce_time )) > time_map[uicfg.darkdelay] * 1000 ) {
 	uimon.status = UI_DARK;
-	uimon.state_entry_time = chVTGetSystemTime();
+	uimon.state_elapsed_time = 0;
       }
     }
   }
@@ -507,9 +511,9 @@ void uiHandler(eventid_t id) {
   // now implement UI_ALRM, UI_NOTE transitions, using the elapsed function
   if( uimon.status == UI_ALRM ) {
     buzzer(1);
-    if( ST2MS(chVTTimeElapsedSinceX( uimon.state_entry_time )) > time_map[uicfg.alarmtime] * 1000 ) {
+    if( uimon.state_elapsed_time > time_map[uicfg.alarmtime] ) {
       uimon.status = UI_LIVE;
-      uimon.state_entry_time = chVTGetSystemTime();
+      uimon.state_elapsed_time = 0;
       buzzer(0);
       buzzer(0);
       buzzer(0);
@@ -517,9 +521,9 @@ void uiHandler(eventid_t id) {
   }
   if( uimon.status == UI_NOTE ) {
     buzzer(1);
-    if( ST2MS(chVTTimeElapsedSinceX( uimon.state_entry_time )) > NOTIFY_TIME ) {
+    if( uimon.state_elapsed_time > NOTIFY_TIME ) {
       uimon.status = UI_LIVE;
-      uimon.state_entry_time = chVTGetSystemTime();
+      uimon.state_elapsed_time = 0;
       buzzer(0);
       buzzer(0);
       buzzer(0);
@@ -530,6 +534,14 @@ void uiHandler(eventid_t id) {
   oledGfxEnd();
   chMtxUnlock(&uigraph.log_mutex);  ////////// unlock uigraph
   
+}
+
+static void seconds_cb(void *arg) {
+  (void) arg;
+  chSysLockFromISR();
+  chVTSetI(&seconds_vt, MS2ST(1000), seconds_cb, NULL);
+  uimon.state_elapsed_time++;
+  chSysUnlockFromISR();
 }
 
 static void ui_cb(void *arg) {
@@ -549,13 +561,15 @@ void uiStart(void) {
   chEvtObjectInit(&ui_timer_event);
   chVTSet(&ui_vt, MS2ST(60), ui_cb, NULL);
 
+  chVTSet(&seconds_vt, MS2ST(1000), seconds_cb, NULL);
+
   uimon.gps_ok = UI_NOT_OK;
   uimon.cell_ok = UI_NOT_OK;
   uimon.wifi_ok = UI_NOT_OK;
   uimon.bt_ok = UI_NOT_OK;
   uimon.status = UI_LIVE;
-  uimon.state_entry_time = chVTGetSystemTime();
-  uimon.state_debounce_time = chVTGetSystemTime();
+  uimon.state_elapsed_time = 0;
+  uimon.state_debounce_time = ST2MS(chVTGetSystemTime()) / 1000;
   
   chMtxObjectInit(&uigraph.log_mutex);
   chMtxLock(&uigraph.log_mutex);
@@ -573,8 +587,8 @@ void uiStart(void) {
   // set config defaults
   uicfg.simsel = 1;
   uicfg.selftest = 0;
-  uicfg.notifyon = 1;
-  uicfg.alarmon = 1;
+  uicfg.notifyon = 0; // 0 for testing, 1 for production
+  uicfg.alarmon = 0; // 0 for testing, 1 for production
   uicfg.alarmtime = 1;
   uicfg.darkdelay = 0;
   uicfg.log_interval = 2000;

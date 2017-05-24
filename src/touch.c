@@ -154,9 +154,62 @@ void touchCb(EXTDriver *extp, expchannel_t channel) {
 
 void touchStart(void) {
   uint8_t tx[2], rx[1];
-
+  int i;
+  
   chEvtObjectInit(&touch_event);
   
+  // don't block multiple touches
+  tx[0] = 0x2A;
+  tx[1] = 0; 
+  i2cAcquireBus(&I2CD1);
+  i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+  i2cReleaseBus(&I2CD1);
+
+  // turn off repeated interrupts on press/hold
+  tx[0] = 0x28;
+  tx[1] = 0; 
+  i2cAcquireBus(&I2CD1);
+  i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+  i2cReleaseBus(&I2CD1);
+
+  // ignore noise detection -- it's causing some buttons to be erroneously masked
+  //  tx[0] = 0x44;
+  //  tx[1] = 0x44;  // RF noise
+  //  i2cAcquireBus(&I2CD1);
+  //  i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+  //  i2cReleaseBus(&I2CD1);
+  tx[0] = 0x20; // ana noise
+  tx[1] = 0x10;  // 0x10 = disable analog noise, 0x20 = disable digital noise
+  i2cAcquireBus(&I2CD1);
+  i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+  i2cReleaseBus(&I2CD1);
+  
+  // adjust thresholds
+  for( i = 0; i < 8; i++ ) {
+    tx[0] = 0x30 + i;
+    tx[1] = 0x40; // default is 0x40
+    i2cAcquireBus(&I2CD1);
+    i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+    i2cReleaseBus(&I2CD1);
+  }
+
+  // enable interrupts
+  tx[0] = 0x27;
+  tx[1] = 0xFF;
+  i2cAcquireBus(&I2CD1);
+  i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+  i2cReleaseBus(&I2CD1);
+
+  // clear any pending interrupts
+  tx[0] = 0;
+  tx[1] = 0;
+  i2cAcquireBus(&I2CD1);
+  i2cMasterTransmitTimeout(&I2CD1, CAP1208_ADDR, tx, 2, rx, 0, TIME_INFINITE);
+  i2cReleaseBus(&I2CD1);
+
+  touch_force_cal();
+
+#if 0
   // don't block multiple touches
   tx[0] = 0x2A;
   tx[1] = 0; 
@@ -179,4 +232,5 @@ void touchStart(void) {
   i2cReleaseBus(&I2CD1);
 
   touch_force_cal();
+#endif
 }

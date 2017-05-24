@@ -97,7 +97,7 @@ extern virtual_timer_t ui_vt;
 extern event_source_t ui_timer_event;
 
 static thread_t *eventThr = NULL;
-static THD_WORKING_AREA(waOrchardEventThread, 0x900);
+static THD_WORKING_AREA(waOrchardEventThread, 0xA00);
 static THD_FUNCTION(orchard_event_thread, arg) {
 
   (void)arg;

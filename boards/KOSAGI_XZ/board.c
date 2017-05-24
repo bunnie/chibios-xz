@@ -29,7 +29,7 @@ const PALConfig pal_default_config =
       .port = IOPORT1,  // PORTA
       .pads = {
         /* PTA0*/ PAL_MODE_ALTERNATIVE_7,   /* PTA1*/ PAL_MODE_UNCONNECTED,     /* PTA2*/ PAL_MODE_UNCONNECTED,
-        /* PTA3*/ PAL_MODE_ALTERNATIVE_7,   /* PTA4*/ PAL_MODE_UNCONNECTED,     /* PTA5*/ PAL_MODE_UNCONNECTED,
+        /* PTA3*/ PAL_MODE_ALTERNATIVE_7,   /* PTA4*/ PAL_MODE_INPUT_PULLUP,    /* PTA5*/ PAL_MODE_UNCONNECTED,
         /* PTA6*/ PAL_MODE_UNCONNECTED,     /* PTA7*/ PAL_MODE_UNCONNECTED,     /* PTA8*/ PAL_MODE_UNCONNECTED,
         /* PTA9*/ PAL_MODE_UNCONNECTED,     /*PTA10*/ PAL_MODE_UNCONNECTED,     /*PTA11*/ PAL_MODE_UNCONNECTED,
         /*PTA12*/ PAL_MODE_INPUT,           /*PTA13*/ PAL_MODE_INPUT,           /*PTA14*/ PAL_MODE_UNCONNECTED,
@@ -141,6 +141,12 @@ bool mmc_lld_is_write_protected(MMCDriver *mmcp) {
  *          and before any other initialization.
  */
 void __early_init(void) {
+
+
+  *((unsigned int *) 0x40048038) |= 0x400; // enable clock to port 2
+  *((unsigned int *) 0x4004A004) = 0x104; // select GPIO
+  *((unsigned int *) 0x400ff054) |= 0x2; // set DDR to output
+  *((unsigned int *) 0x400ff044) |= 0x2; // set output
 
   k22x_clock_init();
   SystemCoreClockUpdate();

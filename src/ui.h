@@ -21,7 +21,7 @@ typedef struct ui_monitor {
   unsigned int wifi_ok;
   unsigned int bt_ok;
   unsigned int status;     // options are: LIVE DARK ALRM NOTE
-  systime_t state_entry_time;
+  uint32_t state_elapsed_time; // time in seconds
   systime_t state_debounce_time;
 } ui_monitor;
 
@@ -37,7 +37,7 @@ typedef struct ui_graph {
   mutex_t log_mutex;
 } ui_graph;
 
-#define NOTIFY_TIME 800
+#define NOTIFY_TIME 1
 typedef struct ui_config {
   unsigned int simsel;
   unsigned int selftest;
