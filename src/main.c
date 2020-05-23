@@ -41,6 +41,9 @@
 
 #include "orchard-test.h"
 
+int sd_active = 0;
+uint8_t sd_dbg_val = 0;
+
 #define SPI_TIMEOUT MS2ST(3000)
 
 #define LED_COUNT 32
