@@ -832,7 +832,7 @@ OrchardTestResult test_radio(const char *my_name, OrchardTestType test_type) {
         }
         chThdSleepMilliseconds(RADIO_TEST_TX_RETRY_MS);
       }
-      if (test_rxdat != (nonce & 0xFFFFFF)) {  // top byte seems missing on this protocol, whoops
+      if (test_rxdat != nonce) {  // top byte seems missing on this protocol, whoops
 	chprintf(stream, "rx mismatch: test_rxdat %x, nonce %x\n\r", test_rxdat, nonce );
         orchardTestPrompt("radio test", "rx mismatch!", 0);
         return orchardResultFail;
