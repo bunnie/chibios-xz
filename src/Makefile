@@ -261,7 +261,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1  -DTESTER_DEVICE for tester peer
-UDEFS = -DTARGET_MK22F -D__FPU_PRESENT=1 #-DTESTER_DEVICE ## -DDISABLE_WATCHDOG  comment out -DDISABLE_WATCHDOG for production # 
+UDEFS = -DTARGET_MK22F -D__FPU_PRESENT=1 # -DTESTER_DEVICE ## -DDISABLE_WATCHDOG  comment out -DDISABLE_WATCHDOG for production # 
 
 # Define ASM defines here
 UADEFS =
