@@ -383,6 +383,8 @@ static void radio_unload_packet(eventid_t id) {
     return;  // abort packet handling if the CRC is bad
   }
   
+  palClearPad(IOPORT5, 0); // turn on red LED
+  
   radio_select(radio);
   reg = RADIO_Fifo;
   spiSend(radio->driver, 1, &reg);
@@ -405,6 +407,7 @@ static void radio_unload_packet(eventid_t id) {
   chprintf(stream, "Unloaded prot %d payload %s len %d crc %x rssi -%ddBm\r\n", pkt.prot, payload, pkt.length, crc, radio_rssi );
 #endif
 
+  palSetPad(IOPORT5, 0); // turn off red LED
   /* Dispatch the packet handler */
   unsigned int i;
   bool handled = false;
@@ -658,6 +661,7 @@ void radioSend(KRadioDevice *radio,
   uint8_t flags;
   const struct userconfig *config;
 
+  palClearPad(IOPORT5, 0); // turn on red LED
   config = getConfig();
 
   pkt.length = bytes + sizeof(pkt);
@@ -750,6 +754,7 @@ void radioSend(KRadioDevice *radio,
   
   radioWrite(radio, RADIO_DioMapping1, DIO0_RxPayloadReady | DIO1_RxFifoNotEmpty);
   //  radioWrite(radio, RADIO_DioMapping1, DIO0_RxCrkOk);
+  palSetPad(IOPORT5, 0); // turn off red LED
 }
 
 static uint32_t test_rxseq = 0;
