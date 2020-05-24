@@ -1,17 +1,26 @@
-# Burning Man 2017 Badge Instructions
+# Burning Man 2020 Badge Instructions
+
+Main differences from 2017 to 2020 badge:
+
+* Batteries are not interchangeable -- connector polarity is swapped between the two
+* New charger circuit -- should have less problems with badges needing a kickstart after a long period of disuse
+* No microSD card cage to get tangled in clothing
+* Radio Tx/Rx LED status
+* Goth color scheme
+* "2020" decal on back
 
 ## Getting Started
 
 We assume you are building on a Raspberry Pi (so ARM-native) device,
 and using gcc6. 
 
-1. Check out https://github.com/bunnie/chibios-xz (git checkout https://github.com/bunnie/chibios-xz chibios-bm17)
-2. Check out the bm17 branch (cd chibios-bm17; git checkout bm17)
+1. Check out https://github.com/bunnie/chibios-xz (git checkout https://github.com/bunnie/chibios-xz chibios-bm20)
+2. Check out the bm20 branch (cd chibios-bm20; git checkout bm20)
 3. Change to the "src" dir
 4. Run "make -j3".  If you're cross-compiling it, add " TRGT=arm-none-eabi-" to the command.
 5. If you get a complaint about stubs-soft.h, create an empty file of that name in the directory where the error message is pointing to and the error will go away.
 
-The build result will be "build/bm17.elf", an object file that can be
+The build result will be "build/bm20.elf", an object file that can be
 loaded using openOCD into the badge.
 
 ## Connecting the SWD via OpenOCD
@@ -44,12 +53,12 @@ You need to compile OpenOCD from source, and enable "bcm2835gpio".  Install the 
 
 Then, run OpenOCD:
 
-    cd chibios-bm17/src
+    cd chibios-bm20/src
     sudo openocd -f bcm-rpi.cfg
 
 ## Loading the ELF File
 
-In gdb, run "load [path-to-build]/build/bm17.elf" to upload the new OS to the board.
+In gdb, run "load [path-to-build]/build/bm20.elf" to upload the new OS to the board.
 
 ## Attaching GDB for debugging
 
